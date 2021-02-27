@@ -1,0 +1,127 @@
+:- dynamic pozycja/1.
+:- dynamic rozmowa/1.
+:- dynamic torebka/1.
+
+%osoby z przyjecia
+man(cezary).
+man(filip).
+man(radek).
+
+woman(dominika).
+woman(magda).
+woman(monika).
+woman(ania).
+
+%ich relacje
+marriage(cezary,dominika).
+marriage(filip,magda).
+marriage(radek,ania).
+
+torebka([cukierek, telefon]).
+
+znajdz_torebka(X) :-
+			torebka(Y),
+			member(X,Y).
+
+wypisz_liste([H|T]) :- write(H), nl, wypisz_liste(T).
+rzeczy :- torebka(X), wypisz_liste(X).
+dodaj(X) :- torebka(Y), append(Y,[X],Z), retract(torebka(Y)), assert(torebka(Z)).
+
+
+
+parent(cezary,monika).
+parent(dominika,monika).
+
+pozycja(sypialnia).
+rozmowa(cezary).
+
+miejsce_czlowiek(sypialnia,cezary).
+miejsce_czlowiek(salon,monika).
+miejsce_czlowiek(salon,ania).
+miejsce_czlowiek(salon,radek).
+miejsce_przeszukanie(sypialnia,list).
+miejsce_przeszukanie(sypialnia,szkatulka).
+miejsce_przeszukanie(sypialnia,skrytka).
+miejsce_przeszukanie(salon,tv).
+
+
+polaczenie_miejsc(sypialnia,salon).
+polaczenie_miejsc(salon,korytarz).
+polaczenie_miejsc(salon, toaleta).
+polaczenie_miejsc(salon, kuchnia).
+polaczenie_miejsc(taras,korytarz).
+
+%rekurencja drogi
+droga(X,Y) :- polaczenie_miejsc(X,Y), write('->'), write(Y).
+droga(X,Y) :- polaczenie_miejsc(X,Z), write('->'), write(Z), droga(Z,Y).
+droga(X,Y) :- droga(Y,X).
+
+
+idz(X) :- pozycja(Y), polaczenie_miejsc(Y,X), retract(pozycja(Y)), assert(pozycja(X)).
+idz(X) :- pozycja(Y), polaczenie_miejsc(X,Y), retract(pozycja(Y)), assert(pozycja(X)).
+idz(X) :- write('Nie mozesz isc do '), write(X).
+
+gdzie_isc(X) :- polaczenie_miejsc(X,Y), write(Y).
+gdzie_isc(X) :- polaczenie_miejsc(Y,X), write(Y).
+
+rozpocznij :-
+				samouczek,
+				write('Witamy na przyjeciu!'), nl,
+				write('Cezary poprosil Cie o pomoc. Ze skrytki zostal ukradziony jego drogocenny pierscien.'), nl,
+				write('Twoim zadaniem jest odnalezienie pierscienia lub zlodziejaszka'), nl,
+                write('-----------------------------------------------'),nl,
+				opis.
+
+samouczek :-
+				write('-----------------------------------------------'),nl,
+				write('Samouczek'),nl,
+				write('Gdy chcesz cos przeszukac wpisz --> przeszukaj(nazwa_miejsca).'),nl,
+				write('Gdy chcesz wiedziec gdzie sie znajdujesz --> opis.'),nl,
+				write('Gdy chcesz z kims porozmawiac --> porozmawiaj(imie).'),nl,
+				write('Gdy chcesz cos zbadac wpisz --> zbadaj(nazwa_miejsca).'),nl,
+				write('-----------------------------------------------'),nl.
+
+opis :-
+				pozycja(X),
+				opis_miejsca(X).
+
+opis_miejsca(sypialnia) :-
+				write('Obecnie znajdujesz sie w sypialni.'), nl,
+				write('mozesz porozmawiac z: '), miejsce_czlowiek(sypialnia,X), write(X), nl,
+				write('mozesz zbadac: '), miejsce_przeszukanie(sypialnia, Y), write(Y).
+				
+opis_miejsca(salon) :-
+				write('Obecnie znajdujesz sie w salonie'), nl,
+				write('mozesz porozmawiac z: '), miejsce_czlowiek(salon,X), write(X),nl;
+				write('mozesz zbadac: '), miejsce_przeszukanie(salon, Y), write(Y).
+
+zbadaj(X) :-
+				pozycja(Y), miejsce_przeszukanie(Y, X), aktywuj(X), !.
+zbadaj(_) :-
+				write('Nie moge tego znalezc').
+
+aktywuj(list):-
+				write('Tresc listu: '), nl,
+				write('Nienawidze Cie! Zaplacisz za to co zrobiles'),nl,
+				write('Podpis: M.'),nl.
+aktywuj(szkatulka) :-
+				write('Szkatulka jest pusta, niezniszczona. Zostala otwarta kluczem').
+aktywuj(skrytka) :-
+				write('Ukryty byl w niej klucz do szkatulki. Zostala kompletnie zniszczona. Ktos kto to zrobil musial miec duzo sily.').
+
+
+porozmawiaj(X) :-
+				rozmowa(Z), pozycja(Y), miejsce_czlowiek(Y,X), opcje_dialog(X),
+				retract(rozmowa(Z)), assert(rozmowa(X)).
+
+
+opcje_dialog(cezary) :-
+				write('Kogo obstawiasz za zlodziejaszka?'),nl,
+				write('*Jesli jestes pewien to napisz: zlodziejaszek(imie_zlodziejaszka).'),nl.
+
+
+zlodziejaszek(filip) :-
+				znajdz_torebka(pierscien),
+				write('Brawo! Udalo Ci sie rozwiazac zagadke!'),nl.
+zlodziejaszek(_) :-
+				write('Przykro mi, ta osoba jest niewinna'),nl.
